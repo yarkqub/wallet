@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet</title>
+    <script src="socket.io/socket.io.js"></script>
+    <script src="chartjs/Chart.min.js"></script>
+    <style>
+        * {
+            margin: 0px;
+            padding: 0px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            /*overflow: hidden;*/
+            /*background: linear-gradient(197deg, #3494E6, #EC6EAD)*/
+            background: linear-gradient(197deg, #0f0c29, #302b63, #24243e)
+        }
+
+        .input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid black;
+            margin: 4px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-areas:
+                "auto auto auto"
+            ;
+            gap: 4px;
+        }
+
+        .container2 {
+            display: grid;
+            grid-template-areas: "auto auto";
+        }
+
+        .container4 {
+            display: grid;
+            grid-template-areas: "auto auto auto auto";
+        }
+
+        .card {
+            background: #FFFFFF;
+            padding: 8px;
+            margin: 8px;
+            border-radius: 4px;
+            width: auto;
+        }
+
+        .button {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-size: 200% auto;
+            transition: 0.5s;
+            box-shadow: 0 0 20px #eee;
+        }
+
+        .btn {
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-size: 200% auto;
+            transition: 0.5s;
+            box-shadow: 0 0 20px #eee;
+        }
+
+        .btn:hover,
+        .button:hover {
+            /*box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);*/
+            background-position: right center;
+            /* change the direction of the change here */
+        }
+
+        .btn:active,
+        .button:active {
+            /*box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);*/
+            background-position: right center;
+            /* change the direction of the change here */
+        }
+
+
+        .modal {
+            z-index: 3;
+            display: none;
+            padding-top: 100px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4)
+        }
+
+        .modal-content {
+            margin: 20px;
+            background-color: #fff;
+            position: relative;
+            padding: 8px;
+            outline: 0;
+            width: auto;
+            border-radius: 4px;
+        }
+
+        .close_modal {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            border-top-right-radius: 4px;
+            border-bottom-left-radius: 4px;
+            padding: 4px;
+            height: 30px;
+            width: 30px;
+            border: 1px solid black;
+            cursor: pointer;
+
+        }
+
+        .close_modal:hover {
+            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        }
+
+        .blue {
+            color: #000 !important;
+            /*background-color: #2196F3 !important;*/
+            background-image: linear-gradient(to right, #0cebeb 0%, #20e3b2 51%, #0cebeb 100%);
+
+        }
+
+        .green {
+            color: #000 !important;
+            /*            background-color: #4CAF50 !important; */
+            background-image: linear-gradient(to right, #56ab2f 0%, #a8e063 51%, #56ab2f 100%);
+        }
+
+        .red {
+            color: #fff !important;
+            /*background-color: #f44336 !important;*/
+            background-image: linear-gradient(to right, #F00000 0%, #DC281E 51%, #F00000 100%);
+        }
+
+        #rec_list {
+            max-height: 200px;
+            overflow: auto;
+        }
+
+        /* width */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 5px grey;
+            border-radius: 10px;
+        }
+
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            background: rgb(146, 146, 146);
+            border-radius: 10px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #535353;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="card">
+            <h3>Balance</h3>
+            <button id="account" class="button blue">Loading...</button>
+            RM <span id="acc_bal">0.00</span>
+        </div>
+        <div class="card">
+            <h3>Usage</h3>
+            RM <span id="acc_usage">0.00</span>
+        </div>
+        <div class="card">
+            <h3>Income</h3>
+            RM <span id="acc_income">0.00</span>
+        </div>
+    </div>
+    <div class="card">
+        <h3>Record <sub>(last 10 record)</sub></h3>
+        <hr>
+        <div id="rec_list"></div>
+    </div>
+    <div class="container2">
+        <div class="card">
+            <button id="new_rec" class="button blue">New Record</button>
+        </div>
+        <div class="card">
+            <button id="man_cat" class="button blue">Category</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <canvas id="canvas" style="height: 300px;"></canvas>
+    </div>
+
+    <div class="card">
+        <canvas id="pie" style="height: 300px;"></canvas>
+    </div>
+
+    <div class="card" style="border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;">
+        <h2>Wallet</h2>
+        <hr>
+        <p>&copy; Wallet 2021. Made with ❤ by Akob @ zetta-hotel.com | 💎Version 1.2</p>
+    </div>
+
+    <div id="man_cat_modal" class="modal">
+        <div class="modal-content">
+            <button class="close_modal red">&times;</button>
+            <h2>Manage category</h2>
+            <hr>
+            Category: <br><select id="mancat_category" class="input category_list"></select>
+            <button class="btn red" id="del_cat">Delete</button>
+            <button class="btn green" id="edit_cat">Edit</button>
+            <button id="add_cat_1" class="button blue">Add Category</button>
+            <br><br>
+            Sub Category: <br>
+            <select class="input sub_cat" name="" id="mancat_subcat"></select>
+            <button class="btn red" id="del_subcat">Delete</button>
+            <button class="btn green" id="edit_subcat">Edit</button>
+            <button id="add_subcat_1" class="button blue">Add Sub Category</button>
+        </div>
+    </div>
+
+    <div id="new_rec_modal" class="modal">
+        <div class="modal-content">
+            <button class="close_modal red">&times;</button>
+            <h2>Add a record</h2>
+            <hr>
+            <button id="rec0" class="button green" style="width: auto;">Expense</button>
+            <button id="rec1" class="button" style="width: auto;">Income</button>
+
+            <br>
+            Category: <br>
+            <select name="category" id="rec_cat" class="input category_list"></select>
+            <select class="input sub_cat" name="" id="rec_subcat"></select>
+            <br>
+            RM <input id="rec_val" class="input" type="number" step="0.01">
+            <br>
+            <button id="add_rec" class="button blue">Record</button>
+        </div>
+    </div>
+    <div id="edit_rec_modal" class="modal">
+        <div class="modal-content">
+            <button class="close_modal red">&times;</button>
+            <h2>Edit record</h2>
+            <hr>
+            <button id="erec0" class="button green" style="width: auto;">Expense</button>
+            <button id="erec1" class="button" style="width: auto;">Income</button>
+
+            <br>
+            Category: <br>
+            <select name="category" id="erec_cat" class="input category_list"></select>
+            <select class="input sub_cat" name="" id="erec_subcat"></select>
+            <br>
+            RM <input id="erec_val" class="input" type="number" step="0.01">
+            <br>
+            <button id="save_rec" class="button blue">Save</button>
+        </div>
+    </div>
+
+    <div id="account_modal" class="modal">
+        <div class="modal-content">
+            <button class="close_modal red">&times;</button>
+            <h2>Account</h2>
+            <hr>
+            Account: <select class="input" name="" id="account_list"></select>
+            <button id="del_acc" class="btn red">Delete</button>
+            <button id="rn_acc" class="btn green">Rename</button>
+            <button id="edit_acc" class="btn green">Edit</button>
+            <br>
+            <button id="add_acc" class="btn blue">Add account</button>
+            <br><br>
+            <button id="use_account" class="btn green">Use</button>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const socket = io()
+            const category_list = document.querySelectorAll(".category_list")
+            const subcat_list = document.querySelectorAll(".sub_cat")
+            const close_modal = document.querySelectorAll(".close_modal")
+            const modal = document.querySelectorAll(".modal")
+
+            window.chartColors = {
+                red: 'rgb(255, 99, 132)',
+                orange: 'rgb(255, 159, 64)',
+                yellow: 'rgb(255, 205, 86)',
+                green: 'rgb(75, 192, 192)',
+                blue: 'rgb(54, 162, 235)',
+                purple: 'rgb(153, 102, 255)',
+                grey: 'rgb(201, 203, 207)'
+            };
+
+            let edit_id = 0
+            let rec_type = 0 //0 - Expense ; 1 - Income
+            let erec_type = 0 //0 - Expense ; 1 - Income
+
+            new_rec.addEventListener("click", () => {
+                new_rec_modal.style.display = "block"
+                subcat_list.forEach(subcatlist => {
+                    subcatlist.innerHTML = ""
+                })
+                socket.emit("use_account")
+            })
+            man_cat.addEventListener("click", () => {
+                man_cat_modal.style.display = "block"
+                subcat_list.forEach(subcatlist => {
+                    subcatlist.innerHTML = ""
+                })
+                socket.emit("use_account")
+            })
+            add_cat_1.addEventListener("click", () => {
+                const newcat = prompt("Category name:")
+                if (newcat) {
+                    socket.emit("add_category", newcat)
+                }
+            })
+            add_subcat_1.addEventListener("click", () => {
+                if (mancat_category.value && mancat_category.value != "0") {
+                    const newsubcat = prompt("Sub Category name:")
+                    if (newsubcat) {
+                        socket.emit("add_subcat", { parent: mancat_category.value, name: newsubcat })
+                    }
+                }
+            })
+            del_subcat.addEventListener("click", () => {
+                if (mancat_subcat.value && mancat_subcat.value != "0") {
+                    let do_delete = confirm("Confirm delete?")
+                    if (do_delete) {
+                        socket.emit("delete_subcat", mancat_subcat.value)
+                    }
+                }
+            })
+            del_cat.addEventListener("click", () => {
+                if (mancat_category.value && mancat_category.value != "0") {
+                    let do_delete = confirm("Confirm delete?")
+                    if (do_delete) {
+                        socket.emit("delete_cat", mancat_category.value)
+                    }
+                }
+            })
+            edit_cat.addEventListener("click", () => {
+                if (mancat_category.value && mancat_category.value != "0") {
+                    let newname = prompt("New name")
+                    if (newname) {
+                        socket.emit("update_cat", { id: mancat_category.value, name: newname })
+                    }
+                }
+            })
+            edit_subcat.addEventListener("click", () => {
+                if (mancat_subcat.value && mancat_subcat.value != "0") {
+                    let newname = prompt("New name")
+                    if (newname) {
+                        socket.emit("update_subcat", { id: mancat_subcat.value, name: newname })
+                    }
+                }
+            })
+            rec0.addEventListener("click", () => {
+                rec0.classList.add("green")
+                rec1.classList.remove("green")
+                rec_type = 0
+            })
+            rec1.addEventListener("click", () => {
+                rec1.classList.add("green")
+                rec0.classList.remove("green")
+                rec_type = 1
+            })
+            erec0.addEventListener("click", () => {
+                erec0.classList.add("green")
+                erec1.classList.remove("green")
+                erec_type = 0
+            })
+            erec1.addEventListener("click", () => {
+                erec1.classList.add("green")
+                erec0.classList.remove("green")
+                erec_type = 1
+            })
+            add_rec.addEventListener("click", () => {
+                if (rec_val.value && rec_val.value > 0) {
+                    if (rec_cat.value && rec_cat.value != "0") {
+                        if (rec_subcat.value && rec_subcat.value != "0") {
+                            socket.emit("record", { type: rec_type, cat: rec_cat.value, subcat: rec_subcat.value, val: rec_val.value })
+                        }
+                        else {
+                            alert("Require sub-category")
+                        }
+                    }
+                    else {
+                        alert("Require category")
+                    }
+                }
+                new_rec_modal.style.display = "none"
+            })
+            account.addEventListener("click", () => {
+                account_modal.style.display = "block"
+                socket.emit("account_list")
+            })
+            add_acc.addEventListener("click", () => {
+                const acc_name = prompt("Account name:")
+                if (acc_name) {
+                    let amount = prompt("Initial amount")
+                    if (isNumeric(amount)) {
+                        socket.emit("add_acc", { name: acc_name, amount: amount })
+                    }
+                }
+            })
+            del_acc.addEventListener("click", () => {
+                if (account_list.value && account_list.value != "0") {
+                    const do_delete = confirm("Confirm delete?")
+                    if (do_delete) {
+                        socket.emit("del_acc", account_list.value)
+                    }
+                }
+            })
+            use_account.addEventListener("click", () => {
+                account_modal.style.display = "none"
+                socket.emit("use_account", account_list.value)
+            })
+            rn_acc.addEventListener("click", () => {
+                const newname = prompt("New name:")
+                if (newname) {
+                    socket.emit("acc_rename", { id: account_list.value, name: newname })
+                }
+            })
+            edit_acc.addEventListener("click", () => {
+                const newbal = prompt("Adjust Balance:")
+                if (newbal) {
+                    if (isNumeric(newbal)) {
+                        socket.emit("adj_acc", { id: account_list.value, bal: newbal })
+                    }
+                }
+            })
+            save_rec.addEventListener("click", () => {
+                //edit_rec
+                edit_rec_modal.style.display = "none"
+                if(erec_subcat.value && erec_subcat.value != "0"){
+                    if(erec_val.value && erec_val.value != "0"){
+                        socket.emit("save_rec", {id: edit_id, type: erec_type, cat: erec_subcat.value, val: erec_val.value})
+                    }
+                }
+            })
+            click_listener(".recdata", e => {
+                edit_id = e.getAttribute("data-id")
+                edit_rec_modal.style.display = "block"
+                socket.emit("get_info", e.getAttribute("data-id"))
+            })
+
+            close_modal.forEach(e => {
+                e.addEventListener("click", () => {
+                    modal.forEach(ev => {
+                        ev.style.display = "none"
+                    })
+                })
+            })
+
+            socket.on("category", data => {
+                category_list.forEach(catlist => {
+                    catlist.innerHTML = "<option value='0'>Select a category</option>"
+                    data.forEach(newlist => {
+                        catlist.insertAdjacentHTML("beforeend", `<option value='${newlist["id"]}'>${newlist["cat_name"]}</option>`)
+                    })
+                })
+            })
+            socket.on("subcat", data => {
+                subcat_list.forEach(subcatlist => {
+                    subcatlist.innerHTML = "<option value='0'>Select a sub category</option>"
+                    data.forEach(newlist => {
+                        subcatlist.insertAdjacentHTML("beforeend", `<option value='${newlist["id"]}'>${newlist["cat_name"]}</option>`)
+                    })
+                })
+            })
+            socket.on("account_list", data => {
+                account_list.innerHTML = ""
+                data.forEach(acc => {
+                    account_list.insertAdjacentHTML("beforeend", `<option value='${acc["id"]}'>${acc["acc_name"]} (RM ${acc["balance"]})</option>`)
+                })
+            })
+            socket.on("use_account", data => {
+                account.innerHTML = data["acc_name"]
+                acc_bal.innerHTML = data["balance"].toFixed(2)
+                acc_usage.innerHTML = data["usage"].toFixed(2)
+                acc_income.innerHTML = data["income"].toFixed(2)
+            })
+            socket.on("record_list", data => {
+                rec_list.innerHTML = ""
+                let total_init_rec = Number(data.acc["balance"])
+                config.data.labels = ["Initial"]
+
+                usage_config.data.datasets[0].data = []
+                usage_config.data.labels = []
+                let usage_cat = 0
+                let temp_usage_cat = []
+                let temp_usage_data = []
+
+                data.rec.forEach(rec => { //just to get total
+                    if (rec["flow"]) {
+                        total_init_rec -= Number(rec["amount"])
+                    }
+                    else {
+                        total_init_rec += Number(rec["amount"])
+                    }
+                })
+                config.data.datasets[0].data = [Number(total_init_rec.toFixed(2))]
+                let temp_1 = []
+                data.rec.forEach(rec => {
+                    type = "<span style='color: green;'>+"
+                    if (rec["flow"] == "0") {
+                        type = "<span style='color: red;'>-"
+                        temp_1.push(-Number(rec["amount"]))
+                    }
+                    else {
+                        temp_1.push(Number(rec["amount"]))
+                    }
+                    const thistime = new Date(Math.floor(rec["datetime"]))
+                    const date = thistime.getDate()
+                    const month = thistime.getMonth() + 1
+                    const year = thistime.getFullYear()
+                    let hour = thistime.getHours()
+                    let minute = thistime.getMinutes()
+                    if (hour < 10) {
+                        hour = "0" + hour
+                    }
+                    if (minute < 10) {
+                        minute = "0" + minute
+                    }
+                    config.data.labels.push(`${date + "/" + month + "/" + year + " " + hour + ":" + minute}`)
+                    let subcat = data.cat.find(cat => cat["id"] == rec["cat_id"])
+                    let cat = data.cat.find(cat => cat["id"] == subcat["cat_parent"])
+                    rec_list.insertAdjacentHTML("beforeend", `<div class='recdata' data-id='${rec["id"]}'>${date + "/" + month + "/" + year + " " + hour + ":" + minute}<br>
+                    ${cat["cat_name"]} -&gt; ${subcat["cat_name"]}<br>
+                        ${type} RM ${rec["amount"].toFixed(2)} </span>
+                        </div>
+                    <hr>`)
+
+                    //push id
+                    if (!temp_usage_cat.some(item => item == cat["id"]) && rec["flow"] == "0") {
+                        temp_usage_cat.push(cat["id"])
+                        temp_usage_data.push(rec["amount"])
+                    }
+                    else {
+                        if (rec["flow"] == "0") {
+                            // let curval = Number(temp_usage_data[temp_usage_data.length - 1]) + Number(rec["amount"])
+                            // temp_usage_data[temp_usage_data.length - 1] = Number(curval)
+                            // console.log(`${cat["cat_name"]} :${rec["amount"]}`)
+                            // console.log(temp_usage_cat)
+                            // console.log(temp_usage_data)
+                            //problem is here... need the index of the same cat
+                            temp_usage_cat.forEach((tmpcat, index) => {
+                                if (tmpcat == cat["id"]) {
+                                    let curval = Number(temp_usage_data[index]) + Number(rec["amount"])
+                                    temp_usage_data[index] = Number(curval)
+                                }
+                            })
+                        }
+                    }
+                })
+
+                temp_usage_cat.forEach(item => {
+                    let cat = data.cat.find(cat => cat["id"] == item)
+                    usage_config.data.labels.push(cat["cat_name"])
+                })
+                temp_usage_data.forEach(item => {
+                    usage_config.data.datasets[0].data.push(item)
+                })
+                window.usagePie.update()
+
+                let temp_2 = []
+                for (let i = temp_1.length - 1; i > -1; i--) {
+                    temp_2.push(temp_1[i])
+                }
+                temp_2.forEach(data => {
+                    total_init_rec += data
+                    config.data.datasets[0].data.push(total_init_rec)
+                })
+                window.myLine.update()
+            })
+            socket.on("edit_info", data => {
+                //edit_rec
+                if (data["rec"]["flow"]) {
+                    erec1.classList.add("green")
+                    erec0.classList.remove("green")
+                    erec_type = 1
+                }
+                else {
+                    erec0.classList.add("green")
+                    erec1.classList.remove("green")
+                    erec_type = 0
+                }
+                let getsubcat = data.cat.find(cat => cat.id == data.rec.cat_id)
+                let getcat = data.cat.find(cat => cat.id == getsubcat.cat_parent)
+                erec_cat.innerHTML = `<option value="${getcat.id}">${getcat.cat_name}</option>`
+                erec_subcat.innerHTML = `<option value="${getsubcat.id}">${getsubcat.cat_name}</option>`
+                erec_val.value = data.rec.amount
+                data.cat.forEach(cat => {
+                    if (cat.cat_parent == "0") {
+                        if (cat.id != getcat.id) {
+                            erec_cat.insertAdjacentHTML("beforeend", `<option value='${cat.id}'>${cat.cat_name}</option>`)
+                        }
+                    }
+                    if(cat.cat_parent == getsubcat.cat_parent){
+                        if(cat.id != data.rec.cat_id){
+                            erec_subcat.insertAdjacentHTML("beforeend", `<option value='${cat.id}'>${cat.cat_name}</option>`)
+                        }
+                    }
+                })
+            })
+            category_list.forEach(catlist => {
+                catlist.addEventListener("change", e => {
+                    subcat_list.forEach(subcatlist => {
+                        subcatlist.innerHTML = ""
+                    })
+                    if (e.target.value && e.target.value != "0") {
+                        socket.emit("req_catsublist", e.target.value)
+                    }
+                })
+            })
+
+            //internal function
+            function click_listener(selector, callback) {
+                document.addEventListener("click", e => {
+                    if (e.target.matches(selector)) {
+                        return callback(e.target)
+                    }
+                })
+            }
+
+            function isNumeric(str) {
+                if (typeof str != "string") return false // we only process strings!  
+                return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+                    !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
+            }
+
+            var usage_config = {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            window.chartColors.red,
+                            window.chartColors.orange,
+                            window.chartColors.yellow,
+                            window.chartColors.green,
+                            window.chartColors.blue,
+                        ],
+                        label: 'Usage'
+                    }],
+                    labels: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    title: {
+                        display: true,
+                        text: 'Last 10 record usage by category'
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            }
+            const pie_ctx = document.getElementById("pie").getContext("2d")
+            window.usagePie = new Chart(pie_ctx, usage_config);
+
+            var config = {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Balance',
+                        backgroundColor: window.chartColors.green,
+                        borderColor: window.chartColors.blue,
+                        fill: true,
+                        data: [],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    title: {
+                        display: true,
+                        text: 'Last 10 record'
+                    },
+                    scales: {
+                        xAxes: [{
+                            display: true,
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'RM'
+                            }
+                        }]
+                    }
+                }
+            };
+
+            var ctx = document.getElementById('canvas').getContext('2d');
+            window.myLine = new Chart(ctx, config);
+
+
+        })()
+    </script>
+</body>
+
+</html>
