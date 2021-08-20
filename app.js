@@ -4,6 +4,7 @@ const http = require("http").createServer(app)
 const io = require("socket.io")(http)
 const Database = require("better-sqlite3")
 const db = new Database("database.db", { verbose: null })
+const PORT = 80
 
 //create account table
 db.prepare("CREATE TABLE IF NOT EXISTS account (id INTEGER PRIMARY KEY AUTOINCREMENT, acc_name TEXT, balance NUMERIC, last_use INTEGER, usage NUMERIC, income NUMERIC)").run()
@@ -175,7 +176,7 @@ io.on("connection", socket => {
 
 })
 
-http.listen(83, () => {
+http.listen(PORT, () => {
     //http.listen(process.env.PORT, () => {
     console.log("Started")
 })
