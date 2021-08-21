@@ -224,7 +224,7 @@
     <div class="card" style="border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;">
         <h2>Wallet</h2>
         <hr>
-        <p>&copy; Wallet 2021. Made with ❤ by Akob @ zetta-hotel.com | 💎Version 1.2</p>
+        <p>&copy; Wallet 2021. Made with ❤ by Akob @ zetta-hotel.com | 💎Version 1.3</p>
     </div>
 
     <div id="man_cat_modal" class="modal">
@@ -350,7 +350,7 @@
             })
             del_subcat.addEventListener("click", () => {
                 if (mancat_subcat.value && mancat_subcat.value != "0") {
-                    let do_delete = confirm("Confirm delete?")
+                    const do_delete = confirm("Confirm delete?")
                     if (do_delete) {
                         socket.emit("delete_subcat", mancat_subcat.value)
                     }
@@ -358,7 +358,7 @@
             })
             del_cat.addEventListener("click", () => {
                 if (mancat_category.value && mancat_category.value != "0") {
-                    let do_delete = confirm("Confirm delete?")
+                    const do_delete = confirm("Confirm delete?")
                     if (do_delete) {
                         socket.emit("delete_cat", mancat_category.value)
                     }
@@ -366,7 +366,7 @@
             })
             edit_cat.addEventListener("click", () => {
                 if (mancat_category.value && mancat_category.value != "0") {
-                    let newname = prompt("New name")
+                    const newname = prompt("New name")
                     if (newname) {
                         socket.emit("update_cat", { id: mancat_category.value, name: newname })
                     }
@@ -374,7 +374,7 @@
             })
             edit_subcat.addEventListener("click", () => {
                 if (mancat_subcat.value && mancat_subcat.value != "0") {
-                    let newname = prompt("New name")
+                    const newname = prompt("New name")
                     if (newname) {
                         socket.emit("update_subcat", { id: mancat_subcat.value, name: newname })
                     }
@@ -423,7 +423,7 @@
             add_acc.addEventListener("click", () => {
                 const acc_name = prompt("Account name:")
                 if (acc_name) {
-                    let amount = prompt("Initial amount")
+                    const amount = prompt("Initial amount")
                     if (isNumeric(amount)) {
                         socket.emit("add_acc", { name: acc_name, amount: amount })
                     }
@@ -456,18 +456,24 @@
                 }
             })
             save_rec.addEventListener("click", () => {
-                //edit_rec
                 edit_rec_modal.style.display = "none"
-                if(erec_subcat.value && erec_subcat.value != "0"){
-                    if(erec_val.value && erec_val.value != "0"){
-                        socket.emit("save_rec", {id: edit_id, type: erec_type, cat: erec_subcat.value, val: erec_val.value})
+                if (erec_subcat.value && erec_subcat.value != "0") {
+                    if (erec_val.value && erec_val.value != "0") {
+                        socket.emit("save_rec", { id: edit_id, type: erec_type, cat: erec_subcat.value, val: erec_val.value })
                     }
                 }
             })
+
             click_listener(".recdata", e => {
                 edit_id = e.getAttribute("data-id")
                 edit_rec_modal.style.display = "block"
                 socket.emit("get_info", e.getAttribute("data-id"))
+            })
+            click_listener(".delrec", e => {
+                const dodel = confirm("Confirm delete record?")
+                if(dodel){
+                    socket.emit("delrec", e.getAttribute("data-id"))
+                }
             })
 
             close_modal.forEach(e => {
@@ -516,8 +522,7 @@
                 let usage_cat = 0
                 let temp_usage_cat = []
                 let temp_usage_data = []
-
-                data.rec.forEach(rec => { //just to get total
+                data.rec.forEach(rec => {
                     if (rec["flow"]) {
                         total_init_rec -= Number(rec["amount"])
                     }
@@ -551,28 +556,21 @@
                     config.data.labels.push(`${date + "/" + month + "/" + year + " " + hour + ":" + minute}`)
                     let subcat = data.cat.find(cat => cat["id"] == rec["cat_id"])
                     let cat = data.cat.find(cat => cat["id"] == subcat["cat_parent"])
-                    rec_list.insertAdjacentHTML("beforeend", `<div class='recdata' data-id='${rec["id"]}'>${date + "/" + month + "/" + year + " " + hour + ":" + minute}<br>
+                    rec_list.insertAdjacentHTML("beforeend", `<div>${date + "/" + month + "/" + year + " " + hour + ":" + minute}  <button class="recdata btn blue" data-id="${rec["id"]}">🖋 Edit</button>  <button class="delrec btn red" data-id="${rec["id"]}">🗑 Delete</button><br>
                     ${cat["cat_name"]} -&gt; ${subcat["cat_name"]}<br>
                         ${type} RM ${rec["amount"].toFixed(2)} </span>
                         </div>
                     <hr>`)
 
-                    //push id
                     if (!temp_usage_cat.some(item => item == cat["id"]) && rec["flow"] == "0") {
                         temp_usage_cat.push(cat["id"])
                         temp_usage_data.push(rec["amount"])
                     }
                     else {
                         if (rec["flow"] == "0") {
-                            // let curval = Number(temp_usage_data[temp_usage_data.length - 1]) + Number(rec["amount"])
-                            // temp_usage_data[temp_usage_data.length - 1] = Number(curval)
-                            // console.log(`${cat["cat_name"]} :${rec["amount"]}`)
-                            // console.log(temp_usage_cat)
-                            // console.log(temp_usage_data)
-                            //problem is here... need the index of the same cat
                             temp_usage_cat.forEach((tmpcat, index) => {
                                 if (tmpcat == cat["id"]) {
-                                    let curval = Number(temp_usage_data[index]) + Number(rec["amount"])
+                                    const curval = Number(temp_usage_data[index]) + Number(rec["amount"])
                                     temp_usage_data[index] = Number(curval)
                                 }
                             })
@@ -581,7 +579,7 @@
                 })
 
                 temp_usage_cat.forEach(item => {
-                    let cat = data.cat.find(cat => cat["id"] == item)
+                    const cat = data.cat.find(cat => cat["id"] == item)
                     usage_config.data.labels.push(cat["cat_name"])
                 })
                 temp_usage_data.forEach(item => {
@@ -600,7 +598,6 @@
                 window.myLine.update()
             })
             socket.on("edit_info", data => {
-                //edit_rec
                 if (data["rec"]["flow"]) {
                     erec1.classList.add("green")
                     erec0.classList.remove("green")
@@ -611,8 +608,8 @@
                     erec1.classList.remove("green")
                     erec_type = 0
                 }
-                let getsubcat = data.cat.find(cat => cat.id == data.rec.cat_id)
-                let getcat = data.cat.find(cat => cat.id == getsubcat.cat_parent)
+                const getsubcat = data.cat.find(cat => cat.id == data.rec.cat_id)
+                const getcat = data.cat.find(cat => cat.id == getsubcat.cat_parent)
                 erec_cat.innerHTML = `<option value="${getcat.id}">${getcat.cat_name}</option>`
                 erec_subcat.innerHTML = `<option value="${getsubcat.id}">${getsubcat.cat_name}</option>`
                 erec_val.value = data.rec.amount
@@ -622,8 +619,8 @@
                             erec_cat.insertAdjacentHTML("beforeend", `<option value='${cat.id}'>${cat.cat_name}</option>`)
                         }
                     }
-                    if(cat.cat_parent == getsubcat.cat_parent){
-                        if(cat.id != data.rec.cat_id){
+                    if (cat.cat_parent == getsubcat.cat_parent) {
+                        if (cat.id != data.rec.cat_id) {
                             erec_subcat.insertAdjacentHTML("beforeend", `<option value='${cat.id}'>${cat.cat_name}</option>`)
                         }
                     }
