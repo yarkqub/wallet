@@ -58,9 +58,7 @@ io.on("connection", socket => {
         socket.emit("record_list", { rec: rec, cat: cat, acc: acc })
     }
 
-    //get_cat()
     use_account()
-    //get_record()
 
     socket.on("add_category", data => {
         db.prepare("INSERT INTO kategori (cat_parent, cat_name) VALUES (?, ?)").run(0, data)
@@ -98,13 +96,10 @@ io.on("connection", socket => {
         get_subcat(item_data["cat_parent"])
     })
     socket.on("record", data => {
-        //(id INTEGER PRIMARY KEY AUTOINCREMENT, acc_id INTEGER, cat_id INTEGER, flow INTEGER, amount NUMERIC)
-        //socket.emit("record", { type: rec_type, cat: rec_cat.value, subcat: rec_subcat.value, val: rec_val.value })
-        //get the active account / in use
         let datenow = new Date
         let gettime = datenow.getTime()
         const acc = db.prepare("SELECT * FROM account WHERE last_use = ?").get("1")
-        db.prepare("INSERT INTO balance (acc_id, cat_id, flow, amount, datetime) VALUES (?, ?, ?, ?, ?)").run(acc["id"], data.subcat, data.type, data.val, gettime)
+        db.prepare("INSERT INTO balance (acc_id, cat_id, flow, amount, datetime) VALUES (?, ?, ?, ?, ?)").run(acc["id"], data.subcat, data.type, Number(data.val).toFixed(2), gettime)
         let newbal = acc["balance"]
         let newusage = acc["usage"]
         let newincome = acc["income"]
